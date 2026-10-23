@@ -24,6 +24,7 @@ const saveCfg = () => store('truco-cfg', CFG);
 const saveStats = () => store('truco-stats', STATS);
 function applySpeed() { M = (RM ? .45 : 1) * (SPEEDS[CFG.speed] || 1); }
 applySpeed();
+const WEB = !!window.TB;
 const nick = () => (SESSION && clean(SESSION.u, 16)) || clean(CFG.nick, 16) || 'Jogador';
 
 /* ---------- Baralho (cartas como texto: valor + naipe c/h/s/d) ---------- */
@@ -454,14 +455,20 @@ const cap = n => (window.claude && window.claude.use) ? window.claude.use(n).cat
   if (USER) {
     try { UID = await USER.id(); } catch (e) {}
   }
-  if (DB && UID) { try { const s = await DB.doc('ranking/' + UID).get(); if (s.exists) MYDOC = s.data(); } catch (e) {} }
+  if (WEB) {
+    const me = await TB.restore();
+    if (me) { UID = me.id; SESSION = { u: me.username, uid: me.id, t: Date.now() }; store('truco-sessao', SESSION); MYDOC = await TB.myRank(); }
+    else if (SESSION) { logout(); }
+    TB.onRecovery(() => { show('scrAuth'); authTab('reset'); resetMode('novo'); });
+  }
+  if (!WEB && DB && UID) { try { const s = await DB.doc('ranking/' + UID).get(); if (s.exists) MYDOC = s.data(); } catch (e) {} }
   if (ROOM) {
     ROOM.onPeers(() => { if (SCREEN === 'scrMenu') renderOnChip(); if (SCREEN === 'scrOnline') renderOnline(); }, () => { ROOM = null; renderOnChip(); });
     lobbyPresence();
   }
   // a sessão salva neste navegador só vale pro mesmo acesso
-  if (SESSION && UID && SESSION.uid && SESSION.uid !== UID) { logout(); return; }
-  if (SESSION && UID && !SESSION.uid) { SESSION.uid = UID; store('truco-sessao', SESSION); }
+  if (!WEB && SESSION && UID && SESSION.uid && SESSION.uid !== UID) { logout(); return; }
+  if (!WEB && SESSION && UID && !SESSION.uid) { SESSION.uid = UID; store('truco-sessao', SESSION); }
   renderMenu();
 })();
 function lobbyPresence() {
@@ -519,7 +526,7 @@ function openCfg() {
   show('scrCfg');
 }
 $('#cfgLogout').onclick = () => message('Sair da conta?', 'Você volta pra tela de entrada. Seu nível e seus pontos continuam salvos.', [{ label: 'Ficar' }, { label: 'Sair', kind: 'redb', fn: logout }]);
-$('#cfgPicks').addEventListener('click', e => { const b = e.target.closest('.pick'); if (!b) return; sfx.click(); CFG.char = b.dataset.k; saveCfg(); openCfg(); $('#cfgPicks [aria-checked="true"]').focus(); });
+$('#cfgPicks').addEventListener('click', e => { const b = e.target.closest('.pick'); if (!b) return; sfx.click(); CFG.char = b.dataset.k; saveCfg(); if (WEB && UID) TB.setChar(CFG.char); openCfg(); $('#cfgPicks [aria-checked="true"]').focus(); });
 $('#cfgSpeed').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; CFG.speed = b.dataset.v; saveCfg(); applySpeed(); $$('#cfgSpeed button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); });
 $('#cfgVol').addEventListener('input', e => { CFG.vol = +e.target.value; saveCfg(); applyVol(); });
 $('#cfgSfx').onchange = e => { CFG.sfx = e.target.checked; saveCfg(); applyVol(); $('#btnSfx').setAttribute('aria-pressed', String(CFG.sfx)); sfx.click(); };
@@ -539,18 +546,19 @@ async function openRank(tab) {
   const wk = tab === 'now' ? weekId() : prevWeekId();
   $('#rankWk').textContent = tab === 'now' ? `Semana de ${weekRange(wk)} · zera em ${fmtLeft(weekLeft())}` : `Semana de ${weekRange(wk)} · resultado final`;
   const body = $('#rankBody');
-  if (!DB || !UID) { body.innerHTML = `<div class="empty">O ranking precisa da sua conta conectada ao jogo, e ela não está disponível nesta visualização. Suas partidas continuam valendo pro seu nível (agora no nível ${lvlOf(myXp()).n}).</div>`; return; }
+  if (WEB ? !UID : (!DB || !UID)) { body.innerHTML = `<div class="empty">O ranking precisa da sua conta conectada ao jogo, e ela não está disponível nesta visualização. Suas partidas continuam valendo pro seu nível (agora no nível ${lvlOf(myXp()).n}).</div>`; return; }
   body.innerHTML = '<div class="empty">Carregando o placar da semana…</div>';
   let rows = [];
   try {
-    const col = DB.collection('ranking');
+    if (WEB) rows = await TB.rank(tab, wk);
+    else { const col = DB.collection('ranking');
     if (tab === 'now') {
       const q = await col.where('semana', '==', wk).orderBy('pts', 'desc').limit(200).get();
       rows = q.docs.map(d => ({ id: d.id, ...d.data() }));
     } else {
       const [a, b] = await Promise.all([col.where('semana', '==', wk).limit(300).get(), col.where('semAnt', '==', wk).limit(300).get()]);
       rows = a.docs.map(d => ({ id: d.id, ...d.data() })).concat(b.docs.map(d => { const x = d.data(); return { id: d.id, ...x, pts: x.ptsAnt, vit: x.vitAnt, jogos: x.jogosAnt }; }));
-    }
+    } }
   } catch (e) { body.innerHTML = '<div class="empty">Não consegui carregar o ranking agora. Tente de novo em instantes.</div>'; return; }
   if (RANK_TAB !== tab) return;
   rows = rows.filter(r => (+r.jogos || 0) > 0).sort((x, y) => (+y.pts || 0) - (+x.pts || 0) || (+y.vit || 0) - (+x.vit || 0));
@@ -572,7 +580,8 @@ async function recordResult(won, online, bonus = 0) {
   const pts = (online ? (won ? 6 : 1) : (won ? LEVELS[G.lvl].pts : 0)) + bonus;
   const xp = pts * 25 + 15;
   STATS.xp += xp; STATS[won ? 'w' : 'l']++; saveStats();
-  if (DB && UID) {
+  if (WEB && UID) { try { MYDOC = await TB.record(won, pts, xp); } catch (e) {} }
+  else if (DB && UID) {
     try {
       const ref = DB.doc('ranking/' + UID), s = await ref.get(), d = s.exists ? { ...s.data() } : {};
       const wk = weekId();
@@ -1557,11 +1566,13 @@ const localAccts = () => load('truco-contas') || {};
 const saveLocalAccts = a => store('truco-contas', a);
 
 async function nameTaken(u) {
+  if (WEB) return TB.nameTaken(u.trim());
   const k = normUser(u);
   if (useDb()) { try { const s = await DB.doc('nomes/' + k).get(); return !!(s.exists && s.data().uid); } catch (e) { return null; } }
   return !!localAccts()[k];
 }
 async function mailTaken(m) {
+  if (WEB) return TB.mailTaken(normMail(m));
   const k = normMail(m);
   if (useDb()) { try { const s = await DB.doc('emails/' + await sha256hex(k)).get(); return !!(s.exists && s.data().uid); } catch (e) { return null; } }
   return Object.values(localAccts()).some(a => a.email === k);
@@ -1578,6 +1589,7 @@ async function claim(ref) {
 }
 async function createAccount(user, mail, pw) {
   const u = user.trim(), uk = normUser(u), mk = normMail(mail);
+  if (WEB) { const n = await TB.signUp(u, mk, pw); UID = TB.uid(); return n; }
   const cred = await hashPw(pw);
   if (useDb()) {
     const mine = await myAccount();
@@ -1601,6 +1613,7 @@ let FAILS = 0, LOCK_UNTIL = 0;
 async function login(id, pw) {
   if (Date.now() < LOCK_UNTIL) throw new Error(`Muitas tentativas. Espere ${Math.ceil((LOCK_UNTIL - Date.now()) / 1000)} segundos.`);
   const raw = id.trim(); if (!raw || !pw) throw new Error('Preencha usuário (ou e-mail) e senha.');
+  if (WEB) { const n = await TB.signIn(raw.includes('@') ? normMail(raw) : raw, pw); UID = TB.uid(); MYDOC = await TB.myRank(); return n; }
   let acct;
   if (useDb()) {
     const ref = raw.includes('@') ? DB.doc('emails/' + await sha256hex(normMail(raw))) : DB.doc('nomes/' + normUser(raw));
@@ -1636,12 +1649,14 @@ async function resetPassword(mail, pw) {
 }
 function startSession(user) {
   SESSION = { u: user, uid: UID || null, t: Date.now() }; store('truco-sessao', SESSION);
+  if (WEB && UID) TB.setChar(CFG.char);
   if (GR) syncMyRoomPresence(); lobbyPresence();
   show('scrMenu'); snack(`Bem-vindo, ${user}!`);
 }
 function logout() {
   SESSION = null; try { localStorage.removeItem('truco-sessao'); } catch (e) {}
   if (CODE) leaveSala();
+  if (WEB) { TB.signOut(); UID = null; MYDOC = null; }
   authTab('login'); show('scrAuth');
 }
 
@@ -1663,7 +1678,16 @@ function authTab(t) {
   $('#tabLogin').setAttribute('aria-selected', String(t !== 'sign')); $('#tabSign').setAttribute('aria-selected', String(t === 'sign'));
   $('.atabs').hidden = t === 'reset';
   ['lgErr', 'sgErr', 'rsErr'].forEach(i => { $('#' + i).textContent = ''; $('#' + i).className = 'aerr'; });
+  if (t === 'reset') resetMode(WEB ? 'link' : '');
   const f = { login: '#lgId', sign: '#sgUser', reset: '#rsMail' }[t]; setTimeout(() => $(f).focus(), 30);
+}
+// '' = troca direta (artifact) · 'link' = pede o link por e-mail · 'novo' = voltou pelo link e escolhe a senha
+let RS_MODE = '';
+function resetMode(m) {
+  RS_MODE = m; const f = $('#fReset'); f.classList.toggle('link', m === 'link'); f.classList.toggle('novo', m === 'novo');
+  $('#rsSub').textContent = m === 'link' ? 'Digite o e-mail da sua conta. Vamos mandar um link pra você escolher uma senha nova.' : m === 'novo' ? 'Pronto, agora é só escolher a senha nova.' : 'Confirme o e-mail da sua conta e escolha uma senha nova.';
+  $('#rsBtn').textContent = m === 'link' ? 'Enviar link' : 'Salvar nova senha';
+  rsRefresh(); if (m === 'novo') setTimeout(() => $('#rsPw').focus(), 30);
 }
 $('#tabLogin').onclick = $('#goLogin').onclick = $('#rsBack').onclick = () => authTab('login');
 $('#tabSign').onclick = $('#goSign').onclick = () => authTab('sign');
@@ -1724,12 +1748,22 @@ $('#fLogin').addEventListener('submit', async e => {
 });
 // nova senha
 const RS = { mail: false, pw: false, pw2: false };
-const rsRefresh = () => { $('#rsBtn').disabled = !(RS.mail && RS.pw && RS.pw2); };
+const rsRefresh = () => { $('#rsBtn').disabled = RS_MODE === 'link' ? !RS.mail : RS_MODE === 'novo' ? !(RS.pw && RS.pw2) : !(RS.mail && RS.pw && RS.pw2); };
 $('#rsMail').addEventListener('input', e => { RS.mail = MAIL_RE.test(e.target.value.trim()); rsRefresh(); });
 ['rsPw', 'rsPw2'].forEach(id => $('#' + id).addEventListener('input', () => { RS.pw = pwState('rsReqs', 'rsMeter', $('#rsPw').value); RS.pw2 = pw2Check($('#rsPw').value, $('#rsPw2').value, 'rsPw2Chk'); rsRefresh(); }));
 $('#fReset').addEventListener('submit', async e => {
   e.preventDefault(); if ($('#rsBtn').disabled) return;
   const err = $('#rsErr'); err.className = 'aerr'; err.textContent = '';
+  if (RS_MODE === 'link') {
+    try { await busy($('#rsBtn'), () => TB.sendReset(normMail($('#rsMail').value))); err.className = 'aerr ok'; err.textContent = 'Se existir uma conta com esse e-mail, o link chega em alguns minutos. Confira também o spam.'; }
+    catch (x) { err.textContent = x.message || 'Não deu pra mandar o link agora.'; }
+    return;
+  }
+  if (RS_MODE === 'novo') {
+    try { const u = await busy($('#rsBtn'), () => TB.updatePassword($('#rsPw').value)); ['rsPw', 'rsPw2'].forEach(i => { $('#' + i).value = ''; }); RS.pw = RS.pw2 = false; resetMode(''); UID = TB.uid(); startSession(u); }
+    catch (x) { err.textContent = x.message || 'Não deu pra trocar a senha agora.'; }
+    return;
+  }
   try {
     const u = await busy($('#rsBtn'), () => resetPassword($('#rsMail').value, $('#rsPw').value));
     ['rsMail', 'rsPw', 'rsPw2'].forEach(i => { $('#' + i).value = ''; }); RS.mail = RS.pw = RS.pw2 = false; pwState('rsReqs', 'rsMeter', ''); setChk('rsPw2Chk', '', ''); rsRefresh();

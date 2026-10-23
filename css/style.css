@@ -622,6 +622,7 @@ input[type=range]{width:100%;accent-color:var(--mustard)}
 #stamp b{font-family:var(--f-title);font-weight:400;font-size:clamp(70px,18vw,150px);letter-spacing:.04em;color:var(--cream);background:var(--red);padding:.05em .35em 0;border-radius:12px;border:4px solid var(--cream);box-shadow:0 0 0 4px var(--red),0 14px 30px rgba(0,0,0,.5);rotate:-7deg;opacity:0}
 #stamp b.go{animation:stamp 1.15s cubic-bezier(.2,.9,.3,1) forwards}
 @keyframes stamp{0%{transform:scale(2.4);opacity:0}22%{transform:scale(.92);opacity:1}32%{transform:scale(1.04)}78%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.1)}}
+#fReset.link .rs-pw,#fReset.novo .rs-mail{display:none}
 #prompt{position:absolute;left:50%;bottom:16px;translate:-50% 0;z-index:20;width:min(380px,calc(100% - 24px));background:var(--green-900);border:2px solid var(--beige);border-radius:16px;padding:14px 16px;text-align:center;box-shadow:0 20px 40px rgba(0,0,0,.6);animation:rise .3s ease-out}
 @keyframes rise{from{opacity:0;transform:translateY(14px)}}
 #prompt h3{margin:0 0 4px;font-family:var(--f-title);font-weight:400;font-size:32px;letter-spacing:.04em;color:var(--cream);line-height:1;text-wrap:balance}

@@ -64,12 +64,12 @@
 
       <form id="fReset" novalidate hidden>
         <h2>Nova senha</h2>
-        <p class="sub">Confirme o e-mail da sua conta e escolha uma senha nova.</p>
-        <div class="field"><label for="rsMail">E-mail cadastrado</label><input class="inp" id="rsMail" type="email" autocomplete="email" autocapitalize="off" spellcheck="false"></div>
-        <div class="field"><label for="rsPw">Nova senha</label><div class="pw"><input class="inp" id="rsPw" type="password" autocomplete="new-password" aria-describedby="rsReqs"><button type="button" class="eye" data-for="rsPw" aria-label="Mostrar senha"></button></div>
+        <p class="sub" id="rsSub">Confirme o e-mail da sua conta e escolha uma senha nova.</p>
+        <div class="field rs-mail"><label for="rsMail">E-mail cadastrado</label><input class="inp" id="rsMail" type="email" autocomplete="email" autocapitalize="off" spellcheck="false"></div>
+        <div class="field rs-pw"><label for="rsPw">Nova senha</label><div class="pw"><input class="inp" id="rsPw" type="password" autocomplete="new-password" aria-describedby="rsReqs"><button type="button" class="eye" data-for="rsPw" aria-label="Mostrar senha"></button></div>
           <div class="meter" id="rsMeter" data-n="0" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div>
-        <ul class="reqs" id="rsReqs"></ul>
-        <div class="field"><label for="rsPw2">Confirmar nova senha</label><div class="pw"><input class="inp" id="rsPw2" type="password" autocomplete="new-password"><button type="button" class="eye" data-for="rsPw2" aria-label="Mostrar senha"></button></div><div class="chk" id="rsPw2Chk" aria-live="polite"></div></div>
+        <ul class="reqs rs-pw" id="rsReqs"></ul>
+        <div class="field rs-pw"><label for="rsPw2">Confirmar nova senha</label><div class="pw"><input class="inp" id="rsPw2" type="password" autocomplete="new-password"><button type="button" class="eye" data-for="rsPw2" aria-label="Mostrar senha"></button></div><div class="chk" id="rsPw2Chk" aria-live="polite"></div></div>
         <button class="btn big block" type="submit" id="rsBtn" disabled>Salvar nova senha</button>
         <div class="aerr" id="rsErr" aria-live="polite"></div>
         <div class="afoot"><button type="button" class="lnk" id="rsBack">Voltar pro login</button></div>
@@ -456,6 +456,8 @@
 <script id="art" type="application/json">{"ze": "assets/img/ze.jpg", "cida": "assets/img/cida.jpg", "jorge": "assets/img/jorge.jpg", "lucia": "assets/img/lucia.jpg", "beto": "assets/img/beto.jpg", "logo": "assets/img/logo.webp"}</script>
 <script id="sfxdata" type="application/json">{"sel": "assets/audio/sfx/sel.mp3", "perdeu": "assets/audio/sfx/perdeu.mp3", "partida": "assets/audio/sfx/partida.mp3", "torneio": "assets/audio/sfx/torneio.mp3"}</script>
 <script id="ambdata" type="application/json">{"a_boteco": "assets/audio/amb/a_boteco.mp3", "a_rua": "assets/audio/amb/a_rua.mp3", "m_chorinho": "assets/audio/amb/m_chorinho.mp3", "m_guarania": "assets/audio/amb/m_guarania.mp3", "m_moda": "assets/audio/amb/m_moda.mp3", "s_bonde": "assets/audio/amb/s_bonde.mp3", "s_brinde": "assets/audio/amb/s_brinde.mp3", "s_buzina": "assets/audio/amb/s_buzina.mp3", "s_carro": "assets/audio/amb/s_carro.mp3", "s_risada": "assets/audio/amb/s_risada.mp3", "s_sino": "assets/audio/amb/s_sino.mp3", "s_vendedor": "assets/audio/amb/s_vendedor.mp3"}</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
+<script src="js/backend.js"></script>
 <script src="js/game.js"></script>
 </body>
 </html>
