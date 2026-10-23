@@ -474,7 +474,7 @@ const cap = n => (window.claude && window.claude.use) ? window.claude.use(n).cat
 function lobbyPresence() {
   if (!ROOM) return;
   const pr = { on: 1, nm: nick(), sala: null };
-  if (CODE && IS_HOST && !LOB.priv) pr.sala = { c: CODE, nm: LOB.nm, n: LOB.seats.filter(Boolean).length, st: LOB.st };
+  if (CODE && IS_HOST) pr.sala = LOB.priv ? { id: SALA_ID, lock: 1, nm: LOB.nm, n: LOB.seats.filter(Boolean).length, st: LOB.st } : { c: CODE, nm: LOB.nm, n: LOB.seats.filter(Boolean).length, st: LOB.st };
   ROOM.presence(pr).catch(() => {});
 }
 const myLobbyPeer = () => (ROOM && ROOM.peers().find(p => p.sameTab) || {}).peer;
@@ -1233,6 +1233,7 @@ $('#qsPop').addEventListener('click', e => {
    publicam o lugar que querem e as respostas das jogadas.
    ===================================================================== */
 let GR = null, GRunsub = null, CODE = null, IS_HOST = false, MYPEER = null;
+let SALA_ID = '';
 let LOB = { nm: '', priv: false, bots: true, lvl: 1, seats: [null, null, null, null], st: 'lobby', game: null, mid: '' };
 let hostSeen = false, hostGoneT = null, lastHostLob = '', chatSeen = {}, qsSeen = {}, sigSeen = {};
 const CODE_ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -1243,17 +1244,44 @@ function renderOnline() {
   $('#onUnavailable').hidden = !!ROOM; $('#onBody').hidden = !ROOM;
   if (!ROOM) return;
   const peers = ROOM.peers();
-  const salas = peers.filter(p => !p.sameTab && p.presence && p.presence.sala && typeof p.presence.sala.c === 'string' && /^[A-Z2-9]{5}$/.test(p.presence.sala.c));
+  const okSala = s => s && (s.lock ? typeof s.id === 'string' && /^[a-z0-9]{3,12}$/.test(s.id) : typeof s.c === 'string' && /^[A-Z2-9]{5}$/.test(s.c));
+  const salas = peers.filter(p => !p.sameTab && p.presence && okSala(p.presence.sala));
   const list = $('#salaList');
-  if (!salas.length) list.innerHTML = '<div class="empty">Nenhuma sala aberta agora. Crie uma e chame a turma.</div>';
-  else list.innerHTML = salas.map(p => {
+  if (ASK && !salas.some(p => p.presence.sala.lock && p.presence.sala.id === ASK.id)) ASK = null;
+  let html;
+  if (!salas.length) html = '<div class="empty">Nenhuma sala no momento. Crie uma e chame a turma.</div>';
+  else html = salas.map(p => {
     const s = p.presence.sala, n = Math.max(0, Math.min(4, +s.n || 0)), jog = s.st === 'game';
-    return `<div class="sala-row"><div><b>${esc(clean(s.nm, 24) || 'Mesa')}</b><small>Código ${esc(s.c)} · ${n}/4 jogadores · ${jog ? 'em jogo' : n >= 4 ? 'cheia' : `falta${4 - n > 1 ? 'm' : ''} ${4 - n}`}</small></div><button class="btn gold" data-c="${esc(s.c)}">${jog || n >= 4 ? 'Assistir' : 'Entrar'}</button></div>`;
+    const info = `${n}/4 jogadores · ${jog ? 'em jogo' : n >= 4 ? 'cheia' : `falta${4 - n > 1 ? 'm' : ''} ${4 - n}`}`;
+    const verb = jog || n >= 4 ? 'Assistir' : 'Entrar';
+    if (!s.lock) return `<div class="sala-row"><div><b>${esc(clean(s.nm, 24) || 'Mesa')}</b><small>Aberta · código ${esc(s.c)} · ${info}</small></div><button class="btn gold" data-c="${esc(s.c)}">${verb}</button></div>`;
+    const open = ASK && ASK.id === s.id;
+    return `<div class="sala-row locked${open ? ' asking' : ''}" data-id="${s.id}"><div><b><svg class="i lk" aria-hidden="true"><use href="#i-lock"/></svg>${esc(clean(s.nm, 24) || 'Mesa')}</b><small>Fechada · ${info}</small></div>` +
+      (open ? `<form class="ask-code" data-id="${s.id}"><input class="inp code" maxlength="5" autocomplete="off" spellcheck="false" placeholder="CÓDIGO" aria-label="Código da sala ${esc(clean(s.nm, 24))}" value="${esc(ASK.v)}"><button class="btn gold" type="submit">${verb}</button><button class="lnk" type="button" data-cancel>Cancelar</button></form>`
+        : `<button class="btn ghost" data-lock="${s.id}"><svg class="i" aria-hidden="true"><use href="#i-lock"/></svg> ${verb}</button>`) + `</div>`;
   }).join('');
+  if (html !== list.dataset.html) {
+    const hadFocus = document.activeElement && document.activeElement.closest('.ask-code');
+    list.innerHTML = html; list.dataset.html = html;
+    if (hadFocus) { const i = list.querySelector('.ask-code input'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
+  }
   const on = peers.filter(p => p.kind === 'viewer').length;
   $('#onCount').innerHTML = `<b>${on}</b> ${on === 1 ? 'pessoa' : 'pessoas'} com o jogo aberto agora. Seus amigos precisam abrir este mesmo Truco Mineiro pelo link que você compartilhar.`;
 }
-$('#salaList').addEventListener('click', e => { const b = e.target.closest('button[data-c]'); if (b) joinSala(b.dataset.c); });
+let ASK = null; // sala fechada pedindo o código: { id, v }
+$('#salaList').addEventListener('click', e => {
+  const b = e.target.closest('button[data-c]'); if (b) return joinSala(b.dataset.c);
+  const l = e.target.closest('button[data-lock]');
+  if (l) { sfx.click(); ASK = { id: l.dataset.lock, v: '' }; $('#joinErr').textContent = ''; renderOnline(); const i = $('#salaList .ask-code input'); if (i) i.focus(); return; }
+  if (e.target.closest('[data-cancel]')) { ASK = null; renderOnline(); }
+});
+$('#salaList').addEventListener('input', e => { const i = e.target.closest('.ask-code input'); if (!i) return; i.value = i.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5); if (ASK) ASK.v = i.value; $('#joinErr').textContent = ''; });
+$('#salaList').addEventListener('submit', e => {
+  const f = e.target.closest('.ask-code'); if (!f) return; e.preventDefault();
+  const c = f.querySelector('input').value.trim();
+  if (!/^[A-Z2-9]{5}$/.test(c)) { $('#joinErr').textContent = 'O código tem 5 letras e números, como BH7K2.'; f.querySelector('input').focus(); return; }
+  ASK = null; joinSala(c);
+});
 $('#joinCode').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5); $('#joinErr').textContent = ''; });
 $('#joinForm').addEventListener('submit', e => { e.preventDefault(); const c = $('#joinCode').value.trim(); if (!/^[A-Z2-9]{5}$/.test(c)) { $('#joinErr').textContent = 'O código tem 5 letras e números, como BH7K2.'; return; } joinSala(c); });
 $('#createForm').addEventListener('submit', e => { e.preventDefault(); if ($('#salaLvl').value === '') return; createSala(); });
@@ -1277,7 +1305,7 @@ function syncMyRoomPresence() {
 async function createSala() {
   if (!ROOM) return; sfx.click();
   await leaveSala();
-  CODE = genCode(); IS_HOST = true;
+  CODE = genCode(); IS_HOST = true; SALA_ID = 'f' + Math.random().toString(36).slice(2, 10);
   CFG.lvl = +$('#salaLvl').value; saveCfg();
   LOB = { nm: clean($('#salaNome').value, 24) || `Mesa do ${nick()}`, priv: $('#salaPriv').checked, bots: true, lvl: CFG.lvl, seats: [null, null, null, null], st: 'lobby', game: null, mid: '' };
   try { await openGameRoom(CODE); } catch (e) { CODE = null; IS_HOST = false; snack('Não deu pra abrir a sala agora. Tente de novo.'); return; }
