@@ -1266,7 +1266,9 @@ function renderOnline() {
     if (hadFocus) { const i = list.querySelector('.ask-code input'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
   }
   const on = peers.filter(p => p.kind === 'viewer').length;
-  $('#onCount').innerHTML = `<b>${on}</b> ${on === 1 ? 'pessoa' : 'pessoas'} com o jogo aberto agora. Seus amigos precisam abrir este mesmo Truco Mineiro pelo link que você compartilhar.`;
+  const st = ROOM.status ? ROOM.status() : null;
+  if (st && !st.ok) $('#onCount').innerHTML = !st.signed ? 'Entre na sua conta pra ver e criar salas.' : st.err ? `Sem conexão com as salas agora (${esc(st.err)}). Tentando de novo…` : 'Conectando às salas…';
+  else $('#onCount').innerHTML = `<b>${on}</b> ${on === 1 ? 'pessoa' : 'pessoas'} com o jogo aberto agora. Seus amigos precisam abrir este mesmo Truco Mineiro pelo link que você compartilhar.`;
 }
 let ASK = null; // sala fechada pedindo o código: { id, v }
 $('#salaList').addEventListener('click', e => {

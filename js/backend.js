@@ -176,35 +176,49 @@
       if (!others.has(p)) return;
       const snap = peerObj(p); others.delete(p); queue('left', p, snap);
     }
-    function connect() {
-      if (closed || ch) return;
+    let gen = 0, connecting = false, tries = 0, lastErr = '';
+    const log = (...a) => { try { console.info('[truco salas]', topic, ...a); } catch (e) {} };
+    const setStatus = () => queue('updated', PEER);
+    async function connect() {
+      if (closed || ch || connecting) return;
       if (!TB.uid()) return;   // canais privados: só com sessão
-      ch = sb.channel(topic, { config: { private: true, broadcast: { self: false, ack: false }, presence: { key: PEER } } });
-      ch.on('broadcast', { event: 'st' }, ({ payload }) => {
-        if (!payload || payload.peer === PEER || typeof payload.pr !== 'object') return;
+      connecting = true; const my = ++gen;
+      try {
+        // um canal antigo com o mesmo nome precisa sair de vez antes (o cliente reaproveitaria o canal quebrado)
+        for (const old of sb.getChannels().filter(c => c.topic === 'realtime:' + topic)) { try { await sb.removeChannel(old); } catch (e) {} }
+        await sb.realtime.setAuth();
+      } catch (e) { log('auth', e && e.message); }
+      connecting = false;
+      if (closed || my !== gen || ch || !TB.uid()) return;
+      const c = sb.channel(topic, { config: { private: true, broadcast: { self: false, ack: false }, presence: { key: PEER } } });
+      ch = c;
+      c.on('broadcast', { event: 'st' }, ({ payload }) => {
+        if (ch !== c || !payload || payload.peer === PEER || typeof payload.pr !== 'object') return;
         const had = others.has(payload.peer);
         others.set(payload.peer, { presence: payload.pr || {}, by: payload.by || null, updatedAt: Date.now() });
         queue(had ? 'updated' : 'joined', payload.peer);
       });
-      ch.on('broadcast', { event: 'bye' }, ({ payload }) => { if (payload && payload.peer !== PEER) drop(payload.peer); });
-      ch.on('presence', { event: 'join' }, ({ key }) => { if (key !== PEER) scheduleSend(); });
-      ch.on('presence', { event: 'leave' }, ({ key }) => { if (key !== PEER) drop(key); });
-      ch.subscribe(async status => {
+      c.on('broadcast', { event: 'bye' }, ({ payload }) => { if (ch === c && payload && payload.peer !== PEER) drop(payload.peer); });
+      c.on('presence', { event: 'join' }, ({ key }) => { if (ch === c && key !== PEER) scheduleSend(); });
+      c.on('presence', { event: 'leave' }, ({ key }) => { if (ch === c && key !== PEER) drop(key); });
+      c.subscribe(async (status, e) => {
+        if (ch !== c) return;
+        log(status, e ? (e.message || String(e)) : '');
         if (status === 'SUBSCRIBED') {
-          ready = true;
-          try { await ch.track({ peer: PEER }); } catch (e) {}
+          ready = true; tries = 0; lastErr = ''; setStatus();
+          try { await c.track({ peer: PEER }); } catch (x) { log('track', x && x.message); }
           sendNow();
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-          ready = false;
+          ready = false; ch = null; lastErr = status === 'TIMED_OUT' ? 'tempo esgotado' : (e && e.message) || status.toLowerCase(); setStatus();
+          Promise.resolve().then(() => sb.removeChannel(c)).catch(() => {});
           if (closed) return;
-          const old = ch; ch = null; try { sb.removeChannel(old); } catch (e) {}
-          clearTimeout(retryT); retryT = setTimeout(connect, 2500);
+          clearTimeout(retryT); retryT = setTimeout(connect, Math.min(10000, 1500 * ++tries));
         }
       });
     }
     function disconnect() {
-      ready = false; clearTimeout(retryT);
-      if (ch) { const old = ch; ch = null; try { old.send({ type: 'broadcast', event: 'bye', payload: { peer: PEER } }); } catch (e) {} setTimeout(() => { try { sb.removeChannel(old); } catch (e) {} }, 150); }
+      ready = false; clearTimeout(retryT); gen++;
+      if (ch) { const old = ch; ch = null; try { old.send({ type: 'broadcast', event: 'bye', payload: { peer: PEER } }); } catch (e) {} setTimeout(() => { Promise.resolve().then(() => sb.removeChannel(old)).catch(() => {}); }, 150); }
       for (const p of [...others.keys()]) drop(p);
     }
     const offAuth = TB.onAuth(uid => { if (closed) return; if (uid) { if (!ch) connect(); else scheduleSend(); } else disconnect(); });
@@ -226,6 +240,7 @@
       onPeers(h) { hs.add(h); setTimeout(() => { if (hs.has(h)) h({ peers: cur, joined: cur.slice(), left: [], updated: [] }); }, 0); return () => hs.delete(h); },
       emit: async () => {}, on: () => () => {},
       connected: () => ready,
+      status: () => ({ ok: ready, err: lastErr, signed: !!TB.uid() }),
       onConnection(h) { setTimeout(() => h(ready), 0); return () => {}; },
       async leave() { if (closed) return; disconnect(); closed = true; offAuth(); hs.clear(); },
     };
