@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Truco mineiro online com a cara da Belo Horizonte dos anos 60. Jogue contra bots, dispute o Torneio da Pampulha ou chame a turma pra uma sala.">
+<meta property="og:title" content="Truco Mineiro">
+<meta property="og:description" content="Truco mineiro com a cara da BH dos anos 60.">
+<meta property="og:image" content="assets/img/og.png">
+<meta name="theme-color" content="#123f2e">
+<link rel="icon" href="assets/img/logo.webp">
+<title>Truco Mineiro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bodoni+Moda:wght@600;700&family=Lato:wght@400;700;900&family=Satisfy&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M9 8h7M9 12h5"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-club" viewBox="0 0 40 40"><g fill="currentColor"><circle cx="20" cy="11" r="8"/><circle cx="11" cy="22" r="8"/><circle cx="29" cy="22" r="8"/><rect x="15" y="12" width="10" height="12"/><path d="M20 20c0 8-2 13-6 16h12c-4-3-6-8-6-16z"/></g></symbol>
+  <symbol id="i-church" viewBox="0 0 64 40"><g fill="currentColor" stroke="none"><path d="M32 0l1 3h-.6v3H35v2h2v6h4v26H23V14h4V8h2V6h2.6V3H31z"/><path d="M10 14l1-3 1 3v2h3v24H7V16h3z"/><path d="M54 14l-1-3-1 3v2h-3v24h8V16h-3z"/><rect x="0" y="34" width="64" height="2" rx="1"/><rect x="15" y="22" width="8" height="18"/><rect x="41" y="22" width="8" height="18"/></g><g fill="var(--green-900)" stroke="none"><path d="M29 40v-8a3 3 0 0 1 6 0v8z"/><circle cx="32" cy="20" r="2.4"/><rect x="9.5" y="22" width="3" height="5" rx="1.5"/><rect x="51.5" y="22" width="3" height="5" rx="1.5"/></g></symbol>
+</svg>
+
+<!-- ENTRAR / CRIAR CONTA -->
+<section class="screen" id="scrAuth" hidden>
+  <div class="frame auth">
+    <canvas class="bg scene" aria-hidden="true"></canvas>
+    <div class="shade"></div>
+    <div class="blogo" id="authLogo"><h1><img class="art" data-art="logo" alt="Truco Mineiro, Belo Horizonte anos 60"></h1></div>
+    <div class="acard">
+      <div class="atabs" role="tablist"><button role="tab" id="tabLogin" aria-selected="true">Entrar</button><button role="tab" id="tabSign" aria-selected="false">Criar conta</button></div>
+
+      <form id="fLogin" novalidate>
+        <h2>Bem-vindo de volta</h2>
+        <p class="sub">Entre com seu nome de usuário ou e-mail.</p>
+        <div class="field"><label for="lgId">Usuário ou e-mail</label><input class="inp" id="lgId" autocomplete="username" autocapitalize="off" spellcheck="false"></div>
+        <div class="field"><label for="lgPw">Senha</label><div class="pw"><input class="inp" id="lgPw" type="password" autocomplete="current-password"><button type="button" class="eye" data-for="lgPw" aria-label="Mostrar senha"></button></div></div>
+        <div class="alinks"><span></span><button type="button" class="lnk" id="goReset">Esqueci minha senha</button></div>
+        <button class="btn big block" type="submit" id="lgBtn">Entrar</button>
+        <div class="aerr" id="lgErr" aria-live="polite"></div>
+        <div class="afoot">Não tem conta? <button type="button" class="lnk" id="goSign">Cadastre-se</button></div>
+      </form>
+
+      <form id="fSign" novalidate hidden>
+        <h2>Criar conta</h2>
+        <p class="sub">Seu nome de usuário aparece na mesa e no ranking.</p>
+        <div class="field"><label for="sgUser">Nome de usuário</label><input class="inp" id="sgUser" maxlength="16" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="ex.: ze_do_truco"><div class="chk" id="sgUserChk" aria-live="polite"></div></div>
+        <div class="field"><label for="sgMail">E-mail</label><input class="inp" id="sgMail" type="email" maxlength="80" autocomplete="email" autocapitalize="off" spellcheck="false"><div class="chk" id="sgMailChk" aria-live="polite"></div></div>
+        <div class="field"><label for="sgPw">Senha</label><div class="pw"><input class="inp" id="sgPw" type="password" autocomplete="new-password" aria-describedby="sgReqs"><button type="button" class="eye" data-for="sgPw" aria-label="Mostrar senha"></button></div>
+          <div class="meter" id="sgMeter" data-n="0" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div>
+        <ul class="reqs" id="sgReqs"></ul>
+        <div class="field"><label for="sgPw2">Confirmar senha</label><div class="pw"><input class="inp" id="sgPw2" type="password" autocomplete="new-password"><button type="button" class="eye" data-for="sgPw2" aria-label="Mostrar senha"></button></div><div class="chk" id="sgPw2Chk" aria-live="polite"></div></div>
+        <button class="btn big block" type="submit" id="sgBtn" disabled>Criar conta</button>
+        <div class="aerr" id="sgErr" aria-live="polite"></div>
+        <div class="afoot">Já tem conta? <button type="button" class="lnk" id="goLogin">Entrar</button></div>
+      </form>
+
+      <form id="fReset" novalidate hidden>
+        <h2>Nova senha</h2>
+        <p class="sub">Confirme o e-mail da sua conta e escolha uma senha nova.</p>
+        <div class="field"><label for="rsMail">E-mail cadastrado</label><input class="inp" id="rsMail" type="email" autocomplete="email" autocapitalize="off" spellcheck="false"></div>
+        <div class="field"><label for="rsPw">Nova senha</label><div class="pw"><input class="inp" id="rsPw" type="password" autocomplete="new-password" aria-describedby="rsReqs"><button type="button" class="eye" data-for="rsPw" aria-label="Mostrar senha"></button></div>
+          <div class="meter" id="rsMeter" data-n="0" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div>
+        <ul class="reqs" id="rsReqs"></ul>
+        <div class="field"><label for="rsPw2">Confirmar nova senha</label><div class="pw"><input class="inp" id="rsPw2" type="password" autocomplete="new-password"><button type="button" class="eye" data-for="rsPw2" aria-label="Mostrar senha"></button></div><div class="chk" id="rsPw2Chk" aria-live="polite"></div></div>
+        <button class="btn big block" type="submit" id="rsBtn" disabled>Salvar nova senha</button>
+        <div class="aerr" id="rsErr" aria-live="polite"></div>
+        <div class="afoot"><button type="button" class="lnk" id="rsBack">Voltar pro login</button></div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- MENU -->
+<section class="screen" id="scrMenu" hidden>
+  <div class="frame menu">
+    <canvas class="bg scene" aria-hidden="true"></canvas>
+    <div class="shade"></div>
+    <header class="mtop">
+      <button class="pchip" id="pchip" aria-label="Seu perfil e configurações">
+        <img id="mAv" alt="">
+        <span class="pc"><b id="mNick">Jogador</b><small id="mLvl">Nível 1</small><span class="xp"><i id="mXp"></i></span><span class="xpt" id="mXpTxt">0 / 200</span></span>
+      </button>
+      <div class="icons">
+        <button class="ibtn" id="mRules" aria-label="Regras"><svg class="i"><use href="#i-help"/></svg></button>
+        <button class="ibtn" id="mCfg" aria-label="Configurações"><svg class="i"><use href="#i-gear"/></svg></button>
+      </div>
+    </header>
+    <div class="blogo" id="menuLogo"><h1><img class="art" data-art="logo" alt="Truco Mineiro, Belo Horizonte anos 60"></h1></div>
+    <nav class="mbtns" aria-label="Menu principal">
+      <button class="mb primary" id="mPlay">Jogar</button>
+      <button class="mb" id="mRank">Ranking</button>
+      <button class="mb" id="mCfg2">Configurações</button>
+    </nav>
+    <footer class="mfoot">
+      <div class="fchip" id="mOnChip"><i class="dot"></i><span id="mOnTxt">Modo offline</span></div>
+      <button class="evchip" id="mWeek"><small>Ranking semanal</small><b>Taça da Liberdade</b><span id="mWeekLeft"></span></button>
+    </footer>
+  </div>
+</section>
+
+<!-- ESCOLHA DE MODO -->
+<section class="screen" id="scrMode" hidden>
+  <div class="frame panel">
+    <div class="phead"><button class="ibtn back" aria-label="Voltar"><svg class="i"><use href="#i-back"/></svg></button><h2>Como deseja jogar?</h2><span></span></div>
+    <div class="pbody"><div class="pin">
+    <div class="mode-cards">
+      <button class="mode-card" id="pickOnline">
+        <div><b>Online</b><span>Jogue com amigos numa sala com código. Vaga que sobrar, um bot completa.</span></div>
+        <div class="faces"><img class="art" data-art="cida" alt=""><img class="art" data-art="beto" alt=""></div>
+        <em class="badge" id="onBadge" hidden>Indisponível</em>
+      </button>
+      <button class="mode-card" id="pickBots">
+        <div><b>Contra bot</b><span>Treine sua malandragem contra a máquina, em quatro níveis.</span></div>
+        <div class="faces"><img class="art" data-art="jorge" alt=""><img class="art" data-art="lucia" alt=""></div>
+      </button>
+    </div>
+  </div></div>
+  </div>
+</section>
+
+<!-- CONTRA BOT: escolha -->
+<section class="screen" id="scrSolo" hidden>
+  <div class="frame panel">
+    <div class="phead"><button class="ibtn back" aria-label="Voltar"><svg class="i"><use href="#i-back"/></svg></button><h2>Contra bot</h2><span></span></div>
+    <div class="pbody"><div class="pin">
+    <div class="mode-cards">
+      <button class="mode-card" id="pickSingle">
+        <div><b>Amistoso</b><span>Uma disputa em melhor de 3 jogos, no nível que você escolher.</span></div>
+        <div class="faces"><img class="art" data-art="ze" alt=""><img class="art" data-art="lucia" alt=""></div>
+      </button>
+      <button class="mode-card" id="pickTour">
+        <div><b>Torneio da Pampulha</b><span>Oito duplas no mata-mata: quartas, semi e final. Os bots ficam mais brabos a cada fase.</span></div>
+        <div class="faces"><img class="art" data-art="jorge" alt=""><img class="art" data-art="beto" alt=""></div>
+        <em class="badge" id="tourBadge" hidden>Em andamento</em>
+      </button>
+    </div>
+    </div></div>
+  </div>
+</section>
+
+<!-- TORNEIO -->
+<section class="screen" id="scrTour" hidden>
+  <div class="frame panel tourbg">
+    <div class="phead"><button class="ibtn back" aria-label="Voltar"><svg class="i"><use href="#i-back"/></svg></button><h2>Torneio da Pampulha</h2><span></span></div>
+    <div class="pbody"><div class="pin w tourpin">
+    <div class="tour-rib"><span>8 duplas · mata-mata · melhor de 3</span></div>
+    <div class="br" id="bracket"></div>
+    <div class="tour-cta" id="tourCta"></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- BOTS -->
+<section class="screen" id="scrBots" hidden>
+  <div class="frame panel">
+    <div class="phead"><button class="ibtn back" aria-label="Voltar"><svg class="i"><use href="#i-back"/></svg></button><h2>Escolha o nível do bot</h2><span></span></div>
+    <div class="pbody"><div class="pin">
+    <div class="opts-list" id="lvlList" role="radiogroup" aria-label="Nível dos bots"></div>
+    <div class="note" id="botsNote"></div>
+    <div class="foot-btn"><button class="btn big" id="btnBotStart">Começar partida</button></div>
+  </div></div>
+  </div>
+</section>
+
+<!-- ONLINE -->
+<section class="screen" id="scrOnline" hidden>
+  <div class="frame panel">
+    <div class="phead"><button class="ibtn back" aria-label="Voltar"><svg class="i"><use href="#i-back"/></svg></button><h2>Jogar online</h2><span></span></div>
+    <div class="pbody"><div class="pin w">
+    <div id="onUnavailable" class="empty" hidden>O modo online precisa de conexão com a mesa compartilhada, e ela não está disponível agora. Abra o jogo pelo claude.ai, com sua conta, para criar ou entrar em salas. Enquanto isso, dá pra jogar contra os bots.</div>
+    <div id="onBody" class="on-grid">
+      <div>
+      <div class="sec">Entrar com código</div>
+      <form class="join-box" id="joinForm">
+        <input class="inp code" id="joinCode" maxlength="5" autocomplete="off" spellcheck="false" placeholder="BH7K2" aria-label="Código da sala">
+        <button class="btn gold" type="submit">Entrar</button>
+      </form>
+      <div class="err" id="joinErr" aria-live="polite"></div>
+      <div class="sec">Salas abertas agora</div>
+      <div class="salas" id="salaList"></div>
+      <div class="note" id="onCount"></div>
+      </div>
+      <div>
+      <div class="sec">Criar sala</div>
+      <form id="createForm">
+        <div class="field"><label for="salaNome">Nome da mesa</label><input class="inp" id="salaNome" maxlength="24" autocomplete="off"></div>
+        <div class="row2">
+          <div class="field"><label id="salaLvlLbl">Bots que completam a mesa</label>
+            <input type="hidden" id="salaLvl" value=""><div class="lvl-chips" id="salaLvlPick" role="radiogroup" aria-labelledby="salaLvlLbl"></div></div>
+        </div>
+        <label class="toggle"><span>Sala privada<small>Não aparece na lista. Só entra quem tiver o código.</small></span><input type="checkbox" class="sw" id="salaPriv"></label>
+        <div class="foot-btn"><button class="btn big" type="submit" id="btnCreate" disabled>Criar sala</button></div>
+      </form>
+      </div>
+    </div>
+  </div></div>
+  </div>
+</section>
+
+<!-- SALA -->
+<section class="screen" id="scrSala" hidden>
+  <div class="frame panel">
+    <div class="phead"><button class="ibtn" id="salaLeave" aria-label="Sair da sala"><svg class="i"><use href="#i-back"/></svg></button><h2 id="salaTitle">Sala de jogo</h2><span></span></div>
+    <div class="pbody"><div class="pin w">
+    <div class="sala-grid">
+      <div>
+        <div class="lobby-table" id="lobbyTable">
+          <div class="mid"><small>Código da sala</small><b id="salaCode">-----</b><div class="count" id="salaCount"></div></div>
+        </div>
+        <div class="legend"><span><i style="background:var(--mustard)"></i>Dupla 1 (lugares de baixo e de cima)</span><span><i style="background:var(--red)"></i>Dupla 2 (lados)</span></div>
+      </div>
+      <div class="side">
+        <div class="box">
+          <h3>Convidar amigos</h3>
+          <p>Passe o código pra turma. Eles abrem o Truco Mineiro, tocam em <b>Jogar online</b> e digitam o código.</p>
+          <div class="row" style="justify-content:flex-start"><button class="btn gold" id="copyCode"><svg class="i" style="width:16px;height:16px;vertical-align:-2px"><use href="#i-copy"/></svg> Copiar convite</button></div>
+        </div>
+        <div class="chat" aria-label="Conversa da sala">
+          <div class="chat-log" id="chatLog" aria-live="polite"></div>
+          <form class="chat-form" id="chatForm"><input class="inp" id="chatIn" maxlength="140" autocomplete="off" placeholder="Escreva uma mensagem…" aria-label="Mensagem"><button class="ibtn" type="submit" aria-label="Enviar"><svg class="i"><use href="#i-send"/></svg></button></form>
+        </div>
+        <div class="host-ctl" id="hostCtl">
+          <label class="toggle" style="padding-top:0"><span>Completar com bots<small id="botLvlTxt">As vagas vazias viram bots no nível Médio.</small></span><input type="checkbox" class="sw" id="salaBots" checked></label>
+          <button class="btn big block" id="salaStart">Começar jogo</button>
+        </div>
+        <div class="note" id="guestCtl" hidden style="text-align:center">Aguardando o anfitrião começar a partida…</div>
+      </div>
+    </div>
+  </div></div>
+  </div>
+</section>
+
+<!-- RANKING -->
+<section class="screen" id="scrRank" hidden>
+  <div class="frame panel">
+    <div class="phead"><button class="ibtn back" aria-label="Voltar"><svg class="i"><use href="#i-back"/></svg></button><h2>Ranking semanal</h2><span></span></div>
+    <div class="pbody"><div class="pin">
+    <div class="tabs" role="tablist"><button role="tab" id="tabNow" aria-selected="true">Esta semana</button><button role="tab" id="tabPrev" aria-selected="false">Semana passada</button></div>
+    <div class="wk" id="rankWk"></div>
+    <div id="rankBody"></div>
+    <div class="note"><b>Como pontua:</b> cada disputa é em melhor de 3. Ganhar online vale 6 pontos e perder vale 1. Contra bots, ganhar no Fácil vale 1, no Médio 2, no Difícil 3 e no Mestre 5. O ranking zera toda segunda-feira à meia-noite.</div>
+  </div></div>
+  </div>
+</section>
+
+<!-- CONFIGURAÇÕES -->
+<section class="screen" id="scrCfg" hidden>
+  <div class="frame panel">
+    <div class="phead"><button class="ibtn back" aria-label="Voltar"><svg class="i"><use href="#i-back"/></svg></button><h2>Configurações</h2><span></span></div>
+    <div class="pbody"><div class="pin">
+    <div class="lbl" style="margin-bottom:8px">Sua conta</div>
+    <div class="acct"><div><b id="cfgUser"></b><small>Esse é o seu nome na mesa e no ranking.</small></div><button class="btn ghost" id="cfgLogout">Sair da conta</button></div>
+    <div class="lbl" style="margin:14px 0 8px">Seu personagem</div>
+    <div class="picks" id="cfgPicks" role="radiogroup" aria-label="Personagem"></div>
+    <div class="bio" id="cfgBio"></div>
+    <div class="sec">Ritmo do jogo</div>
+    <div class="seg" id="cfgSpeed" role="group" aria-label="Ritmo do jogo"><button data-v="calma">Calma</button><button data-v="normal">Normal</button><button data-v="ligeira">Ligeira</button></div>
+    <div class="sec">Som</div>
+    <div class="field"><label for="cfgVol">Volume geral</label><input type="range" id="cfgVol" min="0" max="100" step="5"></div>
+    <label class="toggle"><span>Efeitos do jogo<small>Cartas, batida na mesa, copos.</small></span><input type="checkbox" class="sw" id="cfgSfx"></label>
+    <label class="toggle"><span>Rádio<small>Sertanejo de época tocando baixinho.</small></span><input type="checkbox" class="sw" id="cfgRadio"></label>
+    <label class="toggle"><span>Rua<small>Conversa de boteco, bonde e buzina ao longe.</small></span><input type="checkbox" class="sw" id="cfgRua"></label>
+    <div class="foot-btn"><button class="btn ghost" id="cfgRules">Ver regras</button><button class="btn" id="cfgDone">Pronto</button></div>
+  </div></div>
+  </div>
+</section>
+
+<!-- CARREGANDO -->
+<section class="screen" id="scrLoad" hidden>
+  <div class="frame panel loading">
+    <div class="blogo" id="loadLogo"><h1><img class="art" data-art="logo" alt="Truco Mineiro, Belo Horizonte anos 60"></h1></div>
+    <p>Preparando a mesa…</p>
+    <div class="bar"><i id="loadBar"></i></div>
+    <div class="tip" id="loadTip"></div>
+  </div>
+</section>
+
+<!-- JOGO -->
+<section class="screen" id="scrGame" hidden>
+<aside class="sbd tA" id="sideA" aria-label="Placar da nossa dupla">
+  <div class="sp-faces"><img id="sf0" alt=""><img id="sf2" alt=""></div>
+  <div class="sp-lbl">Nós</div>
+  <div class="sp-names" id="sn0"></div>
+  <div class="sp-score" id="ss0">0</div>
+  <div class="sp-sub">de 12 pontos</div>
+  <div class="sp-sticks" id="st0"></div>
+  <div class="sp-games"><span>Jogos</span><span class="pips" id="sg0"></span></div>
+</aside>
+<div class="app">
+  <header class="gbar">
+    <canvas class="city scene" aria-hidden="true"></canvas>
+    <div class="gl">
+      <button class="ibtn" id="gExit" aria-label="Sair da partida"><svg class="i"><use href="#i-back"/></svg></button>
+      <div class="gt"><b>Truco Mineiro</b><small id="gMode">Contra bots</small></div>
+    </div>
+    <div class="controls">
+      <button class="chip" id="btnRadio" aria-pressed="false" title="Música do rádio">Rádio</button>
+      <button class="chip" id="btnRua" aria-pressed="false" title="Sons da rua e do boteco">Rua</button>
+      <button class="chip" id="btnSfx" aria-pressed="true" title="Cliques e efeitos do jogo">Efeitos</button>
+      <button class="chip" id="btnRules">Regras</button>
+    </div>
+  </header>
+
+  <section class="board" aria-label="Placar">
+    <div class="plate t0">
+      <div class="faces"><img id="pf0" alt=""><img id="pf2" alt=""></div>
+      <div class="lbl"><small>Nós</small><b id="pts0">0</b></div>
+    </div>
+    <div class="status">
+      <div class="value" id="value">Vale 2</div>
+      <div class="rodada">Rodada <span class="dots" id="dots"></span></div>
+      <div class="serie" id="serie"></div>
+    </div>
+    <div class="plate t1">
+      <div class="lbl"><small>Eles</small><b id="pts1">0</b></div>
+      <div class="faces"><img id="pf1" alt=""><img id="pf3" alt=""></div>
+    </div>
+  </section>
+
+  <main class="table" id="table">
+    <div class="felt">
+      <div class="seat north p-row" id="seat2">
+        <div class="who"><img class="av" id="av2" alt=""><div class="tag"><b id="nm2"></b><small id="rl2"></small></div><span class="tmr" id="tm2" hidden><span></span></span></div>
+        <div class="fan" id="fan2"></div>
+        <div class="bubble b-n" id="bub2"></div>
+      </div>
+      <div class="seat west" id="seat3">
+        <div class="who"><img class="av" id="av3" alt=""><div class="tag"><b id="nm3"></b><small id="rl3"></small></div><span class="tmr" id="tm3" hidden><span></span></span></div>
+        <div class="fan" id="fan3"></div>
+        <div class="bubble b-w" id="bub3"></div>
+      </div>
+      <div class="seat east" id="seat1">
+        <div class="who"><img class="av" id="av1" alt=""><div class="tag"><b id="nm1"></b><small id="rl1"></small></div><span class="tmr" id="tm1" hidden><span></span></span></div>
+        <div class="fan" id="fan1"></div>
+        <div class="bubble b-e" id="bub1"></div>
+      </div>
+      <div class="center" id="center">
+        <div class="mark" aria-hidden="true"><b>Truco Mineiro</b><span>BH · ANOS 60</span></div>
+        <div class="slot" id="slot2"></div>
+        <div class="slot" id="slot3"></div>
+        <div class="slot" id="slot1"></div>
+        <div class="slot" id="slot0"></div>
+        <div id="deck" hidden><div class="card back"><span>Truco<br>Mineiro</span></div></div>
+      </div>
+      <div class="seat south p-row" id="seat0">
+        <div class="who"><img class="av" id="av0" alt=""><div class="tag"><b id="nm0"></b><small id="rl0"></small></div><span class="tmr" id="tm0" hidden><span></span></span></div>
+        <div class="bubble b-s" id="bub0"></div>
+      </div>
+    </div>
+    <div id="toast" aria-live="polite"><strong></strong><span></span></div>
+    <div id="stamp" aria-hidden="true"><b></b></div>
+    <div id="prompt" hidden role="dialog" aria-live="assertive"><h3></h3><p></p><div class="adv" id="promptAdv" hidden><img alt=""><div><small></small><b></b></div></div><div class="opts"></div></div>
+    <div id="sigBar" hidden><b>Sinal pro seu parceiro</b><div class="sigs"></div></div>
+    <div id="hint" aria-live="polite"></div>
+  </main>
+
+  <div class="bottom">
+    <div class="spacer"></div>
+    <div class="hand" id="hand" aria-label="Suas cartas"></div>
+    <div class="actions">
+      <button class="btn btn-truco" id="btnTruco" disabled>Truco</button>
+      <button class="btn gold" id="btnCover" aria-pressed="false" disabled>Coberta</button>
+      <button class="ibtn" id="btnQs" aria-label="Frases rápidas" aria-expanded="false"><svg class="i"><use href="#i-chat"/></svg></button>
+      <button class="ibtn" id="btnChat" aria-label="Abrir conversa" hidden><svg class="i"><use href="#i-send"/></svg><span class="badge" id="chatBadge" hidden></span></button>
+      <div id="qsPop" hidden></div>
+    </div>
+  </div>
+</div>
+<aside class="gchat" id="gChat" aria-label="Conversa da mesa">
+  <div class="gc-head"><div><b>Conversa da mesa</b><small id="gcWho"></small></div><button class="ibtn gc-close" id="gcClose" aria-label="Fechar conversa"><svg class="i"><use href="#i-back"/></svg></button></div>
+  <div class="gc-log" id="gChatLog" aria-live="polite"></div>
+  <div class="gc-quick" id="gcQuick"></div>
+  <form class="gc-form" id="gChatForm"><input class="inp" id="gChatIn" maxlength="140" autocomplete="off" placeholder="Mande um recado pra mesa…" aria-label="Mensagem"><button class="ibtn" type="submit" aria-label="Enviar"><svg class="i"><use href="#i-send"/></svg></button></form>
+</aside>
+<aside class="sbd tB" id="sideB" aria-label="Placar da outra dupla">
+  <div class="sp-faces"><img id="sf1" alt=""><img id="sf3" alt=""></div>
+  <div class="sp-lbl">Eles</div>
+  <div class="sp-names" id="sn1"></div>
+  <div class="sp-score" id="ss1">0</div>
+  <div class="sp-sub">de 12 pontos</div>
+  <div class="sp-sticks" id="st1"></div>
+  <div class="sp-games"><span>Jogos</span><span class="pips" id="sg1"></span></div>
+</aside>
+</section>
+
+<div id="fly" aria-hidden="true"></div>
+<div id="snack" role="status"></div>
+
+<div class="overlay" id="rulesScreen" hidden>
+  <div class="sheet">
+    <h2>Como se joga</h2>
+    <div class="mini" id="miniManilhas"></div>
+    <ul class="rules">
+      <li>Baralho sem 8, 9 e 10. Cada um recebe 3 cartas. Quem ganhar 2 de 3 vazas leva a mão. Cada jogo vai até 12 pontos.</li>
+      <li>Toda disputa é <b>melhor de 3</b>: a dupla que ganhar dois jogos leva. Se der 1 a 1, o terceiro jogo é a negra.</li>
+      <li><b>Manilhas fixas</b>, da mais forte: Zap (4 de paus), Copas (7 de copas), Espadilha (ás de espadas) e Pica-fumo (7 de ouros).</li>
+      <li>Depois: 3, 2, A, K, J, Q, 7, 6, 5, 4. Cartas iguais de duplas diferentes cangam (empate).</li>
+      <li>A mão vale <b>2</b>. Truco vale 4, seis vale 8, nove vale 10 e doze vale 12. Quem corre entrega o que já valia.</li>
+      <li>Se a primeira vaza empata, quem ganhar a segunda leva. Se a segunda empata, leva quem fez a primeira.</li>
+      <li>Da segunda vaza em diante dá pra jogar <b>coberta</b>: a carta vai virada e não vale nada.</li>
+      <li><b>Mão de dez</b>: a dupla com 10 vê as cartas do parceiro e decide se joga (vale 4) ou corre (2 pros outros). Sem truco.</li>
+      <li><b>Mão de ferro</b>: as duas duplas com 10. Antes de dar as cartas, escolhe-se jogar aberto ou fechado, com as cartas viradas e ninguém sabendo o que tem.</li>
+      <li>No online, cada jogada tem 40 segundos. Se o tempo acabar, um bot joga por você.</li>
+      <li>Atalhos: teclas 1, 2 e 3 jogam as cartas, T pede truco, C liga a coberta.</li>
+    </ul>
+    <button class="btn" id="btnCloseRules">Entendi</button>
+  </div>
+</div>
+
+<div class="overlay" id="endScreen" hidden>
+  <div class="sheet" style="text-align:center">
+    <h2 id="endTitle" style="font-size:56px"></h2>
+    <div class="script" id="endScript"></div>
+    <div class="duplas">
+      <div><small>Nossa dupla · jogos</small><div class="faces"><img id="ef0" alt=""><img id="ef2" alt=""></div><b id="es0">0</b></div>
+      <div><small>Eles · jogos</small><div class="faces"><img id="ef1" alt=""><img id="ef3" alt=""></div><b id="es1">0</b></div>
+    </div>
+    <div class="ser-hist" id="endHist"></div>
+    <div class="reward" id="endReward"></div>
+    <p id="endText"></p>
+    <div class="row" id="endBtns"></div>
+  </div>
+</div>
+
+<div class="overlay" id="serScreen" hidden>
+  <div class="sheet" style="text-align:center">
+    <div class="ser-tag" id="serTag">Melhor de 3</div>
+    <h2 id="serTitle"></h2>
+    <div class="script" id="serScript"></div>
+    <div class="ser-board">
+      <div class="sb a"><small>Nós</small><b id="serA">0</b></div>
+      <div class="sx">×</div>
+      <div class="sb b"><small>Eles</small><b id="serB">0</b></div>
+    </div>
+    <div class="ser-hist" id="serHist"></div>
+    <p id="serNext"></p>
+    <div class="row" id="serBtns"></div>
+  </div>
+</div>
+<div class="overlay" id="msgScreen" hidden>
+  <div class="sheet" style="text-align:center">
+    <h2 id="msgTitle"></h2>
+    <p id="msgText"></p>
+    <div class="row" id="msgBtns"></div>
+  </div>
+</div>
+
+<script id="art" type="application/json">{"ze": "assets/img/ze.jpg", "cida": "assets/img/cida.jpg", "jorge": "assets/img/jorge.jpg", "lucia": "assets/img/lucia.jpg", "beto": "assets/img/beto.jpg", "logo": "assets/img/logo.webp"}</script>
+<script id="sfxdata" type="application/json">{"sel": "assets/audio/sfx/sel.mp3", "perdeu": "assets/audio/sfx/perdeu.mp3", "partida": "assets/audio/sfx/partida.mp3", "torneio": "assets/audio/sfx/torneio.mp3"}</script>
+<script id="ambdata" type="application/json">{"a_boteco": "assets/audio/amb/a_boteco.mp3", "a_rua": "assets/audio/amb/a_rua.mp3", "m_chorinho": "assets/audio/amb/m_chorinho.mp3", "m_guarania": "assets/audio/amb/m_guarania.mp3", "m_moda": "assets/audio/amb/m_moda.mp3", "s_bonde": "assets/audio/amb/s_bonde.mp3", "s_brinde": "assets/audio/amb/s_brinde.mp3", "s_buzina": "assets/audio/amb/s_buzina.mp3", "s_carro": "assets/audio/amb/s_carro.mp3", "s_risada": "assets/audio/amb/s_risada.mp3", "s_sino": "assets/audio/amb/s_sino.mp3", "s_vendedor": "assets/audio/amb/s_vendedor.mp3"}</script>
+<script src="js/game.js"></script>
+</body>
+</html>
