@@ -863,6 +863,7 @@ function startEngine() {
   const W = async ms => { await wait(ms); chk(); };
   async function E(e) { chk(); if (MODE === 'host') pub(e); await applyEv(e); chk(); renderAll(); }
   async function award(t, pts, why) {
+    if (MEMO.pending) { MEMO.n++; if (MEMO.pending.w < 2.4) MEMO.bl++; MEMO.pending = null; }
     G.sc[t] += pts; G.over = true; G.ask = null; G.turn = -1; G.h = [[], [], [], []]; G.pl = []; G.dez = null;
     await E({ k: 'award', t, pts, why });
   }
@@ -887,7 +888,7 @@ function startEngine() {
     return v;
   }
   async function playHand() {
-    Object.assign(G, { v: 2, lr: -1, r: [], pl: [], over: false, md: false, nt: false, vz: 0, fe: false, bl: false, seen: [], ask: null, dez: null, turn: -1, h: [[], [], [], []] });
+    Object.assign(G, { blf: {}, v: 2, lr: -1, r: [], pl: [], over: false, md: false, nt: false, vz: 0, fe: false, bl: false, seen: [], ask: null, dez: null, turn: -1, h: [[], [], [], []] });
     await E({ k: 'reset' });
     const at = [G.sc[0] === 10, G.sc[1] === 10];
     if (at[0] && at[1]) {
@@ -953,6 +954,7 @@ function startEngine() {
   }
   async function trucoSequence(caller) {
     let ct = team(caller), next = NEXT[G.v], seat = caller;
+    if (isHuman(caller)) MEMO.pending = { w: seatW(caller) };
     await E({ k: 'shout', s: seat, val: next, txt: lineFor(seat, 'call', next) });
     while (true) {
       const rt = 1 - ct, rs = responder(rt, seat);
@@ -962,7 +964,8 @@ function startEngine() {
       let resp = await decide(rs, 'resp', { next, by: seat, adv });
       if (!['accept', 'run', 'raise'].includes(resp)) resp = 'accept';
       if (resp === 'raise' && !NEXT[next]) resp = 'accept';
-      if (resp === 'run') { await E({ k: 'resp', s: rs, a: 'run', txt: lineFor(rs, 'run') }); await award(ct, G.v, 'A outra dupla correu'); return; }
+      if (resp === 'raise' && isHuman(rs)) MEMO.pending = { w: seatW(rs) };
+      if (resp === 'run') { MEMO.pending = null; await E({ k: 'resp', s: rs, a: 'run', txt: lineFor(rs, 'run') }); await award(ct, G.v, 'A outra dupla correu'); return; }
       if (resp === 'accept') { G.v = next; G.lr = ct; await E({ k: 'resp', s: rs, a: 'accept', txt: lineFor(rs, 'accept') }); return; }
       G.v = next; next = NEXT[next]; ct = rt; seat = rs;
       await E({ k: 'shout', s: seat, val: next, txt: lineFor(seat, 'call', next) });
@@ -1063,13 +1066,69 @@ function teamOutlook(t, s) {
   if (LV().nm === 'Mestre' && s !== undefined && G.h[s].length) { const top = Math.max(...G.h[s].map(power)); if (unseenStronger(s, top) === 0) o += 2.5; }
   return o + rand(-LV().noise, LV().noise);
 }
+// Chance estimada de a dupla levar a mão (0 a 1)
+function winProb(t, s) { return 1 / (1 + Math.exp(-(teamOutlook(t, s) - 5.4) / 1.25)); }
+// O que os bots aprendem do jeito de trucar das pessoas (só nas mãos jogadas até o fim, quando as cartas aparecem)
+const MEMO = { n: 0, bl: 0, pending: null };
+const humanBluffRate = () => (MEMO.bl + 1) / (MEMO.n + 4);
+function botStyle(s) { const ch = CHARS[SEATS[s].c] || CHARS.ze, L = LV(); return { bluff: (ch.bluff + L.bluff) * .8, aggr: ch.aggr, skill: 1 - L.rnd * 2 }; }
+// > 0: a dupla precisa arriscar (atrás e o outro lado perto de fechar) · < 0: melhor segurar (na frente e perto de fechar)
+function pressure(t) {
+  const me = G.sc[t], op = G.sc[1 - t]; let p = 0;
+  if (op >= 8 && op - me >= 4) p += .5 + (op - 8) * .12;
+  else if (op - me >= 6) p += .3;
+  if (me >= 8 && me - op >= 4) p -= .35;
+  return p;
+}
+const bluffing = s => !!(G.blf && (G.blf[s] || G.blf[(s + 2) % 4]));
 function botWantsTruco(s) {
-  const t = team(s), ch = CHARS[SEATS[s].c] || CHARS.ze, o = teamOutlook(t, s) + ch.aggr + LV().call, b = bestPlay();
+  const t = team(s), st = botStyle(s), p = winProb(t, s), pr = pressure(t), next = NEXT[G.v], b = bestPlay();
   const myBest = Math.max(...G.h[s].map(power));
   if (G.pl.length === 3 && b && myBest > b.pw && winnerOf([...G.r, t]) === t) return Math.random() < .85;
-  if (o > 7.2) return Math.random() < .6;
-  if (o > 6) return Math.random() < .18;
-  return Math.random() < (ch.bluff + LV().bluff) / 2;
+  const opWins = G.sc[1 - t] + next >= 12, meWins = G.sc[t] + next >= 12;
+  // jogo de verdade: quanto melhor a mão, mais vontade de trucar
+  let val = p > .72 ? .5 + (p - .72) * 1.6 : p > .6 ? .15 + (p - .6) * 2.5 : 0;
+  if (p > .85 && G.vz === 0 && Math.random() < .35 * st.skill) val = 0;   // segura a mão boa pra pegar o outro depois
+  if (meWins) val *= 1.2;
+  val *= 1 + st.aggr * .25 - Math.min(0, pr) * .3;
+  // blefe: mão fraca ou média, mais quando precisa arriscar e quando a mesa ajuda a parecer verdade
+  let bl = 0;
+  if (p < .6) {
+    bl = st.bluff * (p < .45 ? 1 : .55) * (1 + Math.max(0, pr) * 1.6) * (1 + st.aggr * .4);
+    if (G.vz >= 1 && G.r[0] === t) bl *= 1.6;
+    if (G.vz === 2) bl *= 1.3;
+    if (b && team(b.seat) !== t && b.pw >= 11) bl *= .4;
+    if (opWins) bl *= .35;
+    if (pr < 0) bl *= .5;
+  }
+  const roll = Math.random();
+  if (roll < val) return true;
+  if (roll < val + bl) { G.blf = G.blf || {}; G.blf[s] = true; return true; }
+  return false;
+}
+function botRespond(s, ctx) {
+  const t = team(s), st = botStyle(s), L = LV(), cur = G.v, next = ctx.next, pr = pressure(t);
+  const raw = winProb(t, s);
+  // quem trucou costuma ter jogo, a não ser que goste de blefar
+  const br = ctx.by >= 0 && isHuman(ctx.by) ? humanBluffRate() : .22;
+  const p = raw * (1 - .3 * (1 - br) * (L.nm === 'Fácil' ? .5 : 1));
+  // foi blefe nosso e o outro lado aumentou: quase sempre corre, às vezes banca o blefe
+  if (bluffing(s) && raw < .5) {
+    const hold = .08 + Math.max(0, st.aggr) * .12 + Math.max(0, pr) * .2;
+    if (Math.random() < hold) return NEXT[next] && Math.random() < .4 ? 'raise' : 'accept';
+    return 'run';
+  }
+  // conta da aposta: correr entrega o valor atual; aceitar arrisca o próximo
+  let need = (next - cur) / (2 * next) + .08 - st.aggr * .06;
+  if (G.sc[1 - t] + next >= 12 && G.sc[1 - t] + cur < 12) need += .1;
+  if (G.sc[t] + next >= 12) need -= .06;
+  need -= pr * .12;
+  need += rand(-L.noise, L.noise) * .04;
+  let res = p > need ? 'accept' : 'run';
+  if (NEXT[next] && p > .7 + rand(0, .1) && Math.random() < .5 + st.aggr * .2) res = 'raise';
+  if (res === 'accept' && NEXT[next] && raw < .4 && Math.random() < st.bluff * .5 * (1 + Math.max(0, pr))) { res = 'raise'; G.blf = G.blf || {}; G.blf[s] = true; }
+  if (Math.random() < L.rnd * .5) res = Math.random() < .5 ? 'accept' : 'run';
+  return res;
 }
 function botChoose(s) {
   if (G.bl || Math.random() < LV().rnd) return { c: pick(G.h[s]) };
@@ -1091,14 +1150,8 @@ function botChoose(s) {
 }
 function botPick(s, kind, ctx = {}) {
   if (kind === 'play') { if (canCall(team(s)) && SEATS[s].k === 'bot' && botWantsTruco(s)) return { truco: 1 }; return botChoose(s); }
-  if (kind === 'resp') {
-    const ch = CHARS[SEATS[s].c] || CHARS.ze, o = teamOutlook(team(s), s) + ch.aggr * .5;
-    let r = o > 4.6 + (ctx.next - 4) * .12 ? 'accept' : 'run';
-    if (NEXT[ctx.next] && o > 8 && Math.random() < .55) r = 'raise';
-    if (r === 'run' && Math.random() < .12) r = 'accept';
-    return r;
-  }
-  if (kind === 'dez') return teamOutlook(team(s), s) > 4.6;
+  if (kind === 'resp') return botRespond(s, ctx);
+  if (kind === 'dez') { const t = team(s); return winProb(t, s) > .3 + (G.sc[1 - t] + 4 >= 12 ? .12 : 0) - pressure(t) * .1 + rand(-LV().noise, LV().noise) * .03; }
   if (kind === 'ferro') return 'open';
 }
 
