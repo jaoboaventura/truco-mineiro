@@ -694,7 +694,10 @@ function say(s, text, ms = 1800) {
   clearTimeout(bubbleTimers[s]); bubbleTimers[s] = setTimeout(() => b.classList.remove('show'), ms * Math.max(M, .7));
 }
 let toastTimer;
-function toast(big, small = '', ms = 1500) { const t = $('#toast'); t.querySelector('strong').textContent = big; t.querySelector('span').textContent = small; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), ms * Math.max(M, .7)); }
+function toast(big, small = '', ms = 1500, o = {}) {
+  const t = $('#toast'); t.querySelector('strong').textContent = big; t.querySelector('span').textContent = small;
+  const pts = $('#toastPts'); pts.hidden = !o.pts; if (o.pts) { pts.querySelector('b').textContent = '+' + o.pts; pts.querySelector('small').textContent = o.pts === 1 ? 'ponto' : 'pontos'; }
+  t.className = o.side ? 'award ' + o.side : ''; void t.offsetWidth; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), ms * Math.max(M, .7)); }
 function stamp(word) { const b = $('#stamp b'); b.textContent = word; b.classList.remove('go'); void b.offsetWidth; b.classList.add('go'); }
 function shake() { if (RM) return; $('#table').animate([{ transform: 'translate(0,0)' }, { transform: 'translate(-6px,2px)' }, { transform: 'translate(5px,-3px)' }, { transform: 'translate(-3px,1px)' }, { transform: 'translate(0,0)' }], { duration: 320, easing: 'ease-out' }); }
 function fly(html, from, to, { dur = 400, rotFrom = 0, rotTo = 0, fadeOut = false } = {}) {
@@ -817,7 +820,7 @@ async function applyEv(e) {
     }
     case 'award': {
       renderScore(e.t); const mine = e.t === team(ME) && !SPECT;
-      toast(SPECT ? `Dupla ${e.t + 1} levou ${e.pts}` : `${mine ? 'Nós levamos' : 'Eles levaram'} ${e.pts}`, e.why || '');
+      toast(SPECT ? `Dupla ${e.t + 1}` : mine ? 'Pra nós!' : 'Pra eles', e.why || '', 1500, { pts: e.pts, side: SPECT ? (e.t === 0 ? 'us' : 'them') : mine ? 'us' : 'them' });
       if (mine || (SPECT && e.t === 0)) sfx.win(); else sfx.lose();
       await wait(1700); break;
     }
@@ -1922,21 +1925,37 @@ function openTour() {
 const done = m => m && m.w !== null && m.w !== undefined;
 function plate(ti, m, side, ri, mi, opts = {}) {
   const id = `p${ri}${mi}${side}`, pos = opts.pos || '', r = opts.right ? ' r' : '';
-  if (ti === null || ti === undefined) return `<div class="tp tbd${r}" id="${id}" style="${pos}"><span class="tn">A definir</span></div>`;
+  if (ti === null || ti === undefined) return `<div class="tp tbd${r}${opts.cls ? ' ' + opts.cls : ''}" id="${id}" style="${pos}"><span class="tn">A definir</span></div>`;
   const t = TOUR.teams[ti], d = done(m), sc = d ? (side === 'a' ? m.sa : m.sb) : '', mm = myMatch();
   const fresh = TOUR_FRESH.includes(`${ri}-${mi}`);
-  const cls = ['tp', r.trim(), t.me ? 'me' : '', d ? (m.w === ti ? 'win' : 'lose') : '', m === mm ? ('next' + (t.me ? '' : ' opp')) : '', fresh ? 'fresh' : ''].filter(Boolean).join(' ');
+  const cls = ['tp', r.trim(), opts.cls || '', t.me ? 'me' : '', d ? (m.w === ti ? 'win' : 'lose') : '', m === mm ? ('next' + (t.me ? '' : ' opp')) : '', fresh ? 'fresh' : ''].filter(Boolean).join(' ');
   const delay = fresh ? `animation-delay:${TOUR_FRESH.indexOf(`${ri}-${mi}`) * 140 + (side === 'b' ? 70 : 0)}ms;` : '';
   return `<div class="${cls}" id="${id}" data-team="${ti}" style="${pos}${delay}">${t.me ? '<i class="you">Vocês</i>' : ''}<span class="fc"><img src="${ART[t.c[0]]}" alt=""><img src="${ART[t.c[1]]}" alt=""></span><span class="tn">${esc(teamName(t))}</span><em class="sc">${sc}</em></div>`;
+}
+// Bilhete de jogo dos anos 60: canhoto vermelho, picote e o corpo em papel creme
+function ticketHTML(stub, body, stampTxt) {
+  return `<div class="ticket${stampTxt ? ' done' : ''}"><div class="tk-stub"><small>Torneio da</small><b>Pampulha</b><span>${esc(stub)}</span><em>Nº ${String(1960 + (TOUR ? TOUR.cur : 0)).padStart(4, '0')}</em></div><div class="tk-body">${body}${stampTxt ? `<div class="tk-stamp">${esc(stampTxt)}</div>` : ''}</div></div>`;
 }
 function renderTour() {
   const T = TOUR, mm = myMatch(), R = T.r, fin = R[2][0], champ = done(fin) ? T.teams[fin.w] : null;
   const br = $('#bracket'), narrow = matchMedia('(max-width:760px)').matches;
-  br.className = 'br' + (narrow ? ' list' : '');
+  br.className = 'br' + (narrow ? ' vt' : '');
   const champBox = `<div class="champ2"><span class="rib"><small>${champ ? 'Campeões' : 'A taça espera'}</small><b>${champ ? esc(teamName(champ)) : 'Quem vai levar?'}</b></span><span class="hint">${champ ? 'Torneio da Pampulha' : `Campeão ganha +${TOUR_BONUS} pontos no ranking`}</span></div>`;
   if (narrow) {
-    const phase = (ri) => `<div class="phase"><div class="rl"><b>${TOUR_ROUNDS[ri].nm}</b>${lvPips(TOUR_ROUNDS[ri].lv)}</div><div class="pairs">${R[ri].map((m, i) => `<div class="pair">${plate(m.a, m, 'a', ri, i)}${plate(m.b, m, 'b', ri, i)}</div>`).join('')}</div></div>`;
-    br.innerHTML = phase(0) + phase(1) + phase(2) + `<div class="champ-row">${TROPHY}${champBox}</div>`;
+    // a mesma chave da tela deitada, em pé: quartas em cima e embaixo, semis, e a final com a taça no meio
+    const at = (c, r) => `grid-column:${c};grid-row:${r};`;
+    const lab = (r, ri, cls = '') => `<div class="rl ${cls}" style="grid-column:1 / 3;grid-row:${r}"><b>${TOUR_ROUNDS[ri].nm}</b>${lvPips(TOUR_ROUNDS[ri].lv)}</div>`;
+    let h = lab(1, 0);
+    [[0, 1, 2], [1, 2, 2], [2, 1, 11], [3, 2, 11]].forEach(([mi, c, rw]) => { const m = R[0][mi]; h += plate(m.a, m, 'a', 0, mi, { pos: at(c, rw), right: c === 2 }) + plate(m.b, m, 'b', 0, mi, { pos: at(c, rw + 1), right: c === 2 }); });
+    h += lab(4, 1, 'mid');
+    [[0, 5], [1, 9]].forEach(([mi, rw]) => { const m = R[1][mi]; h += plate(m.a, m, 'a', 1, mi, { pos: at(1, rw) }) + plate(m.b, m, 'b', 1, mi, { pos: at(2, rw), right: true }); });
+    h += plate(fin.a, fin, 'a', 2, 0, { pos: at('1 / 3', 6), cls: 'fin top' });
+    h += `<div class="cupv${champ ? ' won' : ''}" style="grid-column:1 / 3;grid-row:7"><div class="cupart">${PAMP}${TROPHY}</div><div class="cupinfo"><div class="vs"><b>Final</b>${lvPips(TOUR_ROUNDS[2].lv)}</div>${champBox}</div></div>`;
+    h += plate(fin.b, fin, 'b', 2, 0, { pos: at('1 / 3', 8), cls: 'fin bot' });
+    h += lab(10, 1, 'mid');
+    h += lab(13, 0, 'end');
+    br.innerHTML = h + '<svg class="lines"></svg>';
+    requestAnimationFrame(drawLines);
   } else {
     const at = (c, r) => `grid-column:${c};grid-row:${r + 1};`;
     let h = '';
@@ -1957,12 +1976,24 @@ function renderTour() {
   const cta = $('#tourCta');
   if (T.st === 'play') {
     const r = TOUR_ROUNDS[T.cur], opp = T.teams[mm.a === T.me ? mm.b : mm.a], partner = CHARS[T.teams[T.me].c[1]].name;
-    cta.innerHTML = `<p>Próximo jogo, <b>${r.nm.toLowerCase()}</b>: você e ${esc(partner)} contra <b>${esc(opp.n)}</b> (${esc(CHARS[opp.c[0]].name)} e ${esc(CHARS[opp.c[1]].name)}). Bots no nível <b>${LEVELS[r.lv].nm}</b>.</p><div class="row"><button class="btn ghost" id="tourQuit">Abandonar</button><button class="btn big redb" id="tourPlay">Jogar ${r.nm.toLowerCase()}</button></div>`;
+    const me = T.teams[T.me], faces = c => `<span class="tk-fc"><img src="${ART[c[0]]}" alt=""><img src="${ART[c[1]]}" alt=""></span>`;
+    cta.innerHTML = ticketHTML(r.nm, `
+      <div class="tk-kick">Próximo jogo<span>${esc(r.nm)}</span></div>
+      <div class="tk-match">
+        <div class="tk-team me">${faces(me.c)}<b>Você e ${esc(partner)}</b></div>
+        <i class="tk-x">×</i>
+        <div class="tk-team">${faces(opp.c)}<b>${esc(opp.n)}</b><small>${esc(CHARS[opp.c[0]].name)} e ${esc(CHARS[opp.c[1]].name)}</small></div>
+      </div>
+      <div class="tk-meta"><span>Bots ${LEVELS[r.lv].nm} ${lvPips(r.lv)}</span><span>Melhor de 3</span><span>Até 12 pontos</span></div>
+      <div class="tk-act"><button class="btn big redb" id="tourPlay">Jogar ${r.nm.toLowerCase()}</button><button class="lnk" id="tourQuit">Abandonar o torneio</button></div>`);
     $('#tourPlay').onclick = () => { sfx.click(); startTourMatch(); };
     $('#tourQuit').onclick = () => message('Abandonar o torneio?', 'A chave atual é descartada e você começa do zero na próxima vez.', [{ label: 'Continuar no torneio' }, { label: 'Abandonar', kind: 'redb', fn: () => { TOUR = null; try { localStorage.removeItem('truco-torneio'); } catch (e) {} openSolo(); } }]);
   } else {
-    const msg = T.st === 'champ' ? `<p><b>Vocês são os campeões do Torneio da Pampulha!</b> A taça é de vocês, sô.</p>` : `<p>Vocês caíram <b>${TOUR_ROUNDS[T.outAt].em}</b>. O título ficou com <b>${esc(champ ? teamName(champ) : '')}</b>.</p>`;
-    cta.innerHTML = `${msg}<div class="row"><button class="btn ghost" id="tourMenu">Menu</button><button class="btn big redb" id="tourNew">Novo torneio</button></div>`;
+    const won = T.st === 'champ';
+    cta.innerHTML = ticketHTML(won ? 'Campeões' : 'Fim de linha', `
+      <div class="tk-kick">${won ? 'Torneio encerrado' : 'Fim da caminhada'}<span>${won ? 'A taça é de vocês, sô!' : `Caíram ${TOUR_ROUNDS[T.outAt].em}`}</span></div>
+      <p class="tk-txt">${won ? 'Ganharam as quartas, a semi e a final. Vai ter foto no jornal amanhã.' : `O título ficou com <b>${esc(champ ? teamName(champ) : 'outra dupla')}</b>. Bora tentar de novo?`}</p>
+      <div class="tk-act"><button class="btn big redb" id="tourNew">Novo torneio</button><button class="lnk" id="tourMenu">Voltar pro menu</button></div>`, won ? 'Campeões' : 'Eliminados');
     $('#tourNew').onclick = () => { sfx.click(); TOUR_FRESH = []; newTour(); renderTour(); };
     $('#tourMenu').onclick = () => show('scrMenu');
   }
@@ -1972,7 +2003,8 @@ function renderTour() {
 function drawLines() {
   const br = $('#bracket'), svg = br && br.querySelector('svg.lines'); if (!svg) return;
   const B = br.getBoundingClientRect(), R = TOUR.r;
-  const box = id => { const el = document.getElementById(id); if (!el) return null; const r = el.getBoundingClientRect(); return { l: r.left - B.left, r: r.right - B.left, y: r.top - B.top + r.height / 2 }; };
+  const box = id => { const el = document.getElementById(id); if (!el) return null; const r = el.getBoundingClientRect(); return { l: r.left - B.left, r: r.right - B.left, y: r.top - B.top + r.height / 2, t: r.top - B.top, b: r.bottom - B.top, cx: r.left - B.left + r.width / 2, w: r.width }; };
+  if (br.classList.contains('vt')) { drawLinesVt(svg, box, R); return; }
   const links = [];
   R[0].forEach((m, mi) => ['a', 'b'].forEach(sd => links.push({ from: `p0${mi}${sd}`, to: `p1${Math.floor(mi / 2)}${mi % 2 ? 'b' : 'a'}`, team: sd === 'a' ? m.a : m.b, won: done(m) && m.w === (sd === 'a' ? m.a : m.b), right: mi >= 2, ri: 0, mi })));
   R[1].forEach((m, mi) => ['a', 'b'].forEach(sd => links.push({ from: `p1${mi}${sd}`, to: `p20${mi ? 'b' : 'a'}`, team: sd === 'a' ? m.a : m.b, won: done(m) && m.w === (sd === 'a' ? m.a : m.b), right: mi === 1, ri: 1, mi })));
@@ -1988,6 +2020,29 @@ function drawLines() {
   TOUR_FRESH_LINES = [];
 }
 let TOUR_FRESH_LINES = [];
+function drawLinesVt(svg, box, R) {
+  let html = '';
+  const path = (d, len, won, key) => {
+    const fresh = won && TOUR_FRESH_LINES.includes(key);
+    html += `<path d="${d}" class="${won ? 'on' : ''}${fresh ? ' draw' : ''}" style="--len:${len};${fresh ? `stroke-dasharray:${len};animation-delay:${300 + TOUR_FRESH_LINES.indexOf(key) * 140}ms` : ''}"/>`;
+  };
+  // quartas: as duas placas do jogo descem (ou sobem) pela lateral até a semifinal
+  R[0].forEach((m, mi) => ['a', 'b'].forEach(sd => {
+    const a = box(`p0${mi}${sd}`), t = box(`p1${Math.floor(mi / 2)}${mi % 2 ? 'b' : 'a'}`); if (!a || !t) return;
+    const left = mi % 2 === 0, x1 = left ? a.l : a.r, x2 = left ? t.l : t.r, xg = left ? Math.min(a.l, t.l) - 9 : Math.max(a.r, t.r) + 9;
+    const won = done(m) && m.w === (sd === 'a' ? m.a : m.b);
+    path(`M${x1} ${a.y} H${xg} V${t.y} H${x2}`, Math.abs(xg - x1) * 2 + Math.abs(t.y - a.y), won, `0-${mi}`);
+  }));
+  // semis: as duas placas se encontram no meio e seguem até a final
+  R[1].forEach((m, mi) => ['a', 'b'].forEach(sd => {
+    const a = box(`p1${mi}${sd}`), f = box(`p20${mi ? 'b' : 'a'}`); if (!a || !f) return;
+    const down = mi === 0, y1 = down ? a.b : a.t, ty = down ? f.t : f.b, ym = (y1 + ty) / 2, tx = f.cx + (sd === 'a' ? -1 : 1) * f.w * .18;
+    const won = done(m) && m.w === (sd === 'a' ? m.a : m.b);
+    path(`M${a.cx} ${y1} V${ym} H${tx} V${ty}`, Math.abs(ym - y1) + Math.abs(tx - a.cx) + Math.abs(ty - ym), won, `1-${mi}`);
+  }));
+  svg.innerHTML = html;
+  TOUR_FRESH_LINES = [];
+}
 addEventListener('resize', () => { if (SCREEN === 'scrTour' && TOUR) { clearTimeout(drawLines.t); drawLines.t = setTimeout(renderTour, 120); } });
 
 async function startTourMatch() {
